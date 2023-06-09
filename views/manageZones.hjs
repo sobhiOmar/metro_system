@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+   <link rel='stylesheet' href='/styles/bootstrap.min.css' />
+   <link rel='stylesheet' href='/styles/style.css' />
+   <script src="/js/jquery-2.2.0.min.js" type="text/javascript"></script>
+   <script src="/js/bootstrap.min.js" type="text/javascript"></script>
+   <title>Manage refund requests</title>
+   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+   <style>
+      .navbar {
+         margin-bottom: 0;
+         border-radius: 0;
+      }
+   </style>
+   <script>
+      $(document).ready(function() {
+         // Send GET request to /api/v1/zones
+         $.ajax({
+            type: "get",
+            url: "/api/v1/zone",
+            success: function(response) {
+               console.log(response);
+               response.forEach(function(zone) {
+                  var row = `
+                     <tr>
+                        <td>${zone.id}</td>
+                        <td>${zone.zonetype}</td>
+                        <td>${zone.price}</td>
+                        <td>
+                           <button class="update-button btn btn-primary" data-station-id="${zone.id}">edit</button>
+                        </td>
+                     </tr>
+                  `;
+                  $('tbody').append(row);
+               });
+
+               // Attach event listener to update buttons
+               $('.update-button').click(function() {
+                  const id = $(this).data('station-id');
+
+                  // Prompt the user for a new price using the prompt dialog
+                  const newPrice = prompt('Enter new price');
+
+                  if (newPrice !== null) {
+                     // Create the data object to send in the PUT request
+                     const data = {
+                        price: newPrice
+                     };
+
+                     $.ajax({
+                        type: "PUT",
+                        url: '/api/v1/zones/' + id,
+                        data,
+                        success: function(serverResponse) {
+                           console.log(serverResponse);
+                           if (serverResponse) {
+                              alert('Price updated successfully');
+                              window.location.href = '/manage/zones';
+                           }
+                        },
+                        error: function(errorResponse) {
+                           if (errorResponse) {
+                              alert(`Error updating price: ${errorResponse.responseText}`);
+                           }
+                        }
+                     });
+                  }
+               });
+            },
+            error: function(error) {
+               console.error("Error retrieving zones:", error);
+            }
+         });
+      });
+   </script>
+</head>
+<body>
+   <nav class="navbar navbar-inverse">
+      <div class="container-fluid">
+         <div class="navbar-header">
+            <a class="navbar-brand" href="/dashboard">Home</a>
+         </div>
+         <ul class="nav navbar-nav">
+            <li><a href="/create/stations">Create Stations</a></li>
+            <li><a href="/create/routes">Create Routes</a></li>
+         </ul>
+         <ul class="nav navbar-nav navbar-right">
+            <li><a href="/">Logout</a></li>
+         </ul>
+      </div>
+   </nav>
+   <div class="container">
+      <table class="table">
+         <thead>
+            <tr>
+               <th scope="col">zone id:</th>
+               <th scope="col">zone type :</th>
+               <th scope="col">zone price  :</th>
+            </tr>
+         </thead>
+         <tbody>
+         </tbody>
+      </table>
+   </div>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Set New Password</title>
+    <link rel='stylesheet' href='/styles/bootstrap.min.css' />
+    <link rel='stylesheet' href='/styles/style.css' />
+    <script src="/js/jquery-2.2.0.min.js" type="text/javascript"></script>
+    <script src="/js/bootstrap.min.js" type="text/javascript"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <script>
+    $(document).ready(function(){    
+      // Handle update Button Click
+      $("#update_button").click(function() {
+        const idd = window.location.pathname.split("/").pop();
+        const stationname = $('#stationname').val();
+        const stationtype = $('#stationtype').val();
+        const stationposition = $('#stationposition').val();
+        const stationstatus = $('#stationstatus').val();
+        const data = {
+            stationname,
+            stationtype,
+            stationposition,
+            stationstatus,
+            idd
+        };
+        $.ajax({
+          type: "put",
+          url: '/manage/stations/id',
+          data,
+          success: function(serverResponse) {
+            console.log(serverResponse);
+            if(serverResponse) {
+              alert('station updated successfully'); 
+              //window.location.href = '/';
+            }
+          },
+          error: function(errorResponse) {
+            if(errorResponse) {
+              alert(`Error updating station: ${errorResponse.responseText}`);
+            }            
+          }
+        });
+      });
+
+
+        $("#delete_button").click(function() {
+        const id = window.location.pathname.split("/").pop();
+        const data = {
+            id,
+        };
+        
+        $.ajax({
+          type: "DELETE",
+          url: '/manage/stations/id',
+          data,
+          success: function(serverResponse) {
+            console.log(serverResponse);
+            if(serverResponse) {
+              alert('station deleted successfully'); 
+              //window.location.href = '/';
+            }
+          },
+          error: function(errorResponse) {
+            if(errorResponse) {
+              alert(`Error deleting station: ${errorResponse.responseText}`);
+            }            
+          }
+        });
+      });
+
+
+    });
+    </script>
+        <div>
+        <nav class="navbar navbar-inverse" style="padding-left:130px;">
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="/dashboard">Home</a></li>
+            <li><a href="/create/routes">manage routes</a></li>
+            <li><a href="/users">Users</a></li>
+            <li><a href="/users/add">Add Users</a></li>
+              <li><a href="/get/stationroutesdata">station - route data</a></li>
+            <li><a href="/">Logout</a></li>
+          </ul>
+       </nav>
+      </div>
+  <h1>manage station</h1>
+  <form method="POST" action="/manage/stations">                        
+<div style="padding-left: 500px">
+    <form class="form-horizontal" style="width: 50%;">
+      <div class="form-group">
+          <label for="stationname" class="col-sm-2 control-label">Name</label>
+          <div class="col-sm-10">
+              <input type="text" class="form-control" id="stationname" name="station name" placeholder="Name" value="">
+          </div>
+      </div>
+      <div class="form-group">
+          <label for="type" class="col-sm-2 control-label">Type</label>
+          <div class="col-sm-10">
+              <input type="text" class="form-control" id="stationtype" name="station type" placeholder="type" value="">
+          </div>
+      </div>
+      <div class="form-group">
+          <label for="position" class="col-sm-2 control-label">position</label>
+          <div class="col-sm-10">
+              <input type="text" class="form-control" id="stationposition" name="station position" placeholder="position" value="">
+          </div>
+      </div>
+      <div class="form-group">
+          <label for="status" class="col-sm-2 control-label">status</label>
+          <div class="col-sm-10">
+              <input type="text" class="form-control" id="stationstatus" name="station status" placeholder="status" value="">
+          </div>
+      </div>
+      <div class="form-group">
+          <div class="col-sm-10 col-sm-offset-2">
+              <input id="update_button" name="update" type="button" value="update" class="btn btn-primary">
+          </div>
+      </div>
+            <div class="form-group">
+          <div class="col-sm-10 col-sm-offset-2">
+              <input id="delete_button" name="delete" type="button" value="delete" class="btn btn-primary">
+          </div>
+      </div>
+  </form>
+    </div>
+  </form>
+</body>
+</html>

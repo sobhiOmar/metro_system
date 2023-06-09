@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Graph</title>
+</head>
+<body>
+<h1>Graph</h1>
+<meta charset="utf-8">
+<div id="graph"></div>
+<link rel="stylesheet" type="text/css" href="stylee.css">
+
+</body>
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script>type="" src="view.js"</script>
+
+
+</body>
+</html>

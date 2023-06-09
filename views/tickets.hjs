@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <head>
+      <link rel='stylesheet' href='/styles/bootstrap.min.css' />
+      <link rel='stylesheet' href='/styles/style.css' />
+      <script src="/js/jquery-2.2.0.min.js" type="text/javascript"></script>
+      <script src="/js/bootstrap.min.js" type="text/javascript"></script>
+    </head>
+  </head>
+  <body>
+    <script>
+      $(document).ready(function(){    
+      // Handle Registration Button Click
+      $('.refund-button').click(function() {
+        var ticketId = $(this).data('ticket-id');   
+        console.log(ticketId);
+        $.ajax({
+          type: "POST",
+          url: '/api/v1/refund/'+ticketId,
+        
+          success: function(serverResponse) {
+            if(serverResponse) {
+              alert('your request has been submitted');
+            }
+          },
+          error: function(errorResponse) {
+            if(errorResponse) {
+              alert(` error: ${errorResponse.responseText}`);
+            }            
+          }
+        });
+            
+      });  
+    });
+    </script>
+    <div>
+      <nav class="navbar navbar-inverse" style="padding-left:130px;">
+          <ul class="nav navbar-nav">
+            <li><a href="/dashboard">Home</a></li>
+          </ul>
+      </nav>
+    </div>
+
+    <div class="center">
+      <h1>Tickets</h1>
+    </div>
+    <table class="table">
+        <thead>
+          {{#ticks}}
+            <tr>
+              <td>{{id}}</td>
+              <td>{{origin}}</td>
+              <td>{{destination}}</td>
+              <td>{{userid}}</td>
+              <td>{{subid}}</td>
+              <td>{{tripdate}}</td>
+              <td><button class="refund-button btn btn-primary" data-ticket-id="{{id}}">refund</button></td>
+            </tr> 
+          {{/ticks}}
+        </thead>
+      </table>
+  </body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+   <link rel='stylesheet' href='/styles/bootstrap.min.css' />
+      <link rel='stylesheet' href='/styles/style.css' />
+      <script src="/js/jquery-2.2.0.min.js" type="text/javascript"></script>
+      <script src="/js/bootstrap.min.js" type="text/javascript"></script>
+  <title>Set New Password</title>
+  <!-- Include jQuery library -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+
+
+    <script>
+    $(document).ready(function(){    
+      $("#update_button").click(function() {
+        const routename = $('#routename').val();
+        const routeid =  window.location.pathname.split("/").pop();
+        console.log(routeid);
+        const fromstationid = $('#fromstationid').val();
+        const tostationid = $('#tostationid').val();
+        const data = {
+            routeid,
+            routename,
+            fromstationid,
+            tostationid,
+      };
+        $.ajax({
+          type: "put",
+          url: '/manage/routes/id',
+          data,
+          success: function(serverResponse) {
+            console.log(serverResponse);
+            if(serverResponse) {
+              alert('route updated successfully'); 
+              window.location.href = '/dashboard';
+            }
+          },
+          error: function(errorResponse) {
+            if(errorResponse) {
+              alert(`Error updating route: ${errorResponse.responseText}`);
+            }            
+          }
+        });
+      });
+
+
+        $("#delete_button").click(function() {
+          event.preventDefault();
+        let idd = window.location.pathname.split("/").pop();
+        const data = {
+            idd
+        };
+        const canBeDeleted = $(this).closest('tr').find('.canbedeleted').text();
+        if (canBeDeleted === 'no') {
+        alert('This route cannot be deleted.');
+        return; 
+        }
+        $.ajax({
+          type: "DELETE",  
+          url: '/api/v1/route/'+idd,
+          data,
+          success: function(serverResponse) {
+            console.log(serverResponse);
+            if(serverResponse) {
+              alert('route deleted successfully'); 
+              window.location.href = '/dashboard';
+            }
+          },
+          error: function(errorResponse) {
+            if(errorResponse) {
+              alert(`Error deleting route: ${errorResponse.responseText}`);
+            }            
+          }
+        });
+      });
+    });
+    </script>
+        <div>
+        <nav class="navbar navbar-inverse" style="padding-left:130px;">
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="/dashboard">Home</a></li>
+            <li><a href="/create/stations">create stations</a></li>
+            <li><a href="/users">Users</a></li>
+            <li><a href="/users/add">Add Users</a></li>
+            <li><a href="/get/stationroutesdata">station - route data</a></li>
+            <li><a href="/">Logout</a></li>
+          </ul>
+       </nav>
+      </div>
+    <h1>Manage Route</h1>
+<form method="POST" action="/manage/routes/id">
+    <div style="padding-left: 500px">
+          <div style="margin: 0 auto; max-width: 50%;">
+        <div class="form-group">
+            <label for="routename" class="col-sm-2 control-label">Name</label>
+            <div class="col-sm-10">
+                <input type="text" class="form-control" id="routename" name="routeName" placeholder="Name" value="">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="fromstationid" class="col-sm-2 control-label">From</label>
+            <div class="col-sm-10">
+                <input type="text" class="form-control" id="fromstationid" name="fromStationId" placeholder="From" value="">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="tostationid" class="col-sm-2 control-label">To</label>
+            <div class="col-sm-10">
+                <input type="text" class="form-control" id="tostationid" name="toStationId" placeholder="To" value="">
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-10 col-sm-offset-2">
+                <input id="update_button" name="update" type="submit" value="Update" class="btn btn-primary">
+            </div>
+        </div>
+        </form>
+        <div class="form-group">
+            <div class="col-sm-10 col-sm-offset-2">
+                <input id="delete_button" name="delete" type="submit" value="Delete" class="btn btn-primary">
+            </div>
+        </div>
+    </div>
+</form>
+
+</body>
+</html>

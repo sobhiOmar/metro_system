@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Network Graph</title>
+  <style>
+    #network-container {
+      width: 100%;
+      height: 100vh;
+    }
+#node-options {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background-color: white;
+  border: 1px solid black;
+  padding: 10px;
+  display: none;
+}
+#edge-options {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background-color: white;
+  border: 1px solid black;
+  padding: 10px;
+  display: none;
+}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/vis-network/standalone/umd/vis-network.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+  
+  <div id="network-container"></div>
+  <div id="node-options"></div>
+  <div id="edge-options"></div>
+
+  <script>
+    var stations = JSON.parse(`{{{stations}}}`);
+    var routes = JSON.parse(`{{{routes}}}`);
+    var container = document.getElementById('network-container');
+
+    var nodes = [];
+    var edges = [];
+    console.log(routes);
+    // Process the stations data
+    stations.forEach(function(station) {
+      // Create a node object for each station
+      var node = {
+        id: station.id,
+        stationname: station.stationname,
+        stationtype: station.stationtype,
+        stationposition: station.stationposition,
+        stationstatus: station.stationstatus,
+        label: station.stationname + ' (' + station.id + ')',
+        shape: 'dot',
+        // You can customize other node properties as needed
+      };
+
+      nodes.push(node);
+    });
+
+    routes.forEach(function(route) {
+      var edge = {
+        id: route.routeId,
+        label: route.routename,
+        from: route.fromStationId,
+        fromName: route.fromStationName,
+        fromPosition: route.fromStationPosition,
+        to: route.toStationId,
+        toName: route.toStationName,
+        toPosition: route.toStationPosition,
+        canbedeleted: route.canbedeleted,
+        
+      };
+      edges.push(edge);
+    });
+
+    var nodeDataSet = new vis.DataSet(nodes);
+    var edgeDataSet = new vis.DataSet(edges);
+    var data = {
+      nodes: nodeDataSet,
+      edges: edgeDataSet,
+    };
+    var options = {
+      // You can customize various options for the network graph
+    };
+    var network = new vis.Network(container, data, options);
+
+    // Add event listener for node and edge click
+    network.on("click", function(params) {
+      if (params.nodes.length > 0) {
+        var selectedNodeId = params.nodes[0];
+        var selectedNode = nodes.find(function(node) {
+          return node.id === selectedNodeId;
+        });
+
+        var nodeOptions = document.getElementById('node-options');
+        nodeOptions.innerHTML = `
+          <h4>Station Data</h4>
+          <p>Station ID: ${selectedNode.id}</p>
+          <p>Station Name: ${selectedNode.stationname}</p>
+          <p>Station Type: ${selectedNode.stationtype}</p>
+          <p>Station Position: ${selectedNode.stationposition}</p>
+          <p>Station Status: ${selectedNode.stationstatus}</p>
+          <h4>Options</h4>
+          <button onclick="updateNode(${selectedNode.id})">Update</button>
+          <button onclick="deleteNode(${selectedNode.id})">Delete</button>
+        `;
+        nodeOptions.style.display = 'block';
+      } else if (params.edges.length > 0) {
+        var selectedEdgeId = params.edges[0];
+        var selectedEdge = edges.find(function(edge) {
+          return edge.id === selectedEdgeId;
+        });
+
+        var edgeOptions = document.getElementById('edge-options');
+        edgeOptions.innerHTML = `
+          <h4>Route Information</h4>
+          <p>Route ID: ${selectedEdge.id}</p>
+          <p>Route Name: ${selectedEdge.label}</p>
+          <p>from station id: ${selectedEdge.from}</p>
+          <p>from station name: ${selectedEdge.fromName}</p>
+          <p>from station Position: ${selectedEdge.fromPosition}</p>
+          <p>To station id: ${selectedEdge.to}</p>
+          <p>To station Name: ${selectedEdge.toName}</p>
+          <p>To station Position: ${selectedEdge.toPosition}</p>
+          <p>Can be deleted: ${selectedEdge.canbedeleted}</p>
+          <h4>Options</h4>
+          <button onclick="deleteEdge(${selectedEdge.id})">Delete</button>
+          <button onclick="updateEdge(${selectedEdge.id})">Update</button>
+        `;
+        edgeOptions.style.display = 'block';
+      }
+    });
+
+    function updateNode(nodeId) {
+      window.open('/manage/stations/' + nodeId, '_blank');
+      console.log("Update node:", nodeId);
+    }
+
+    function deleteNode(nodeId) {
+      $.ajax({
+        type: "DELETE",
+        url: '/manage/stations/' + nodeId,
+        data: { id: nodeId },
+        success: function(serverResponse) {
+          console.log(serverResponse);
+          if (serverResponse) {
+            alert('Station deleted successfully');
+            window.location.href = '/graph';
+          }
+        },
+        error: function(errorResponse) {
+          if (errorResponse) {
+            alert(`Error deleting station: ${errorResponse.responseText}`);
+          }
+        }
+      });
+      console.log("Delete node:", nodeId);
+    }
+
+    function deleteEdge(edgeId) {
+      $.ajax({
+        type: "DELETE",
+        url: '/manage/routes/' + edgeId,
+        data: { id: edgeId },
+        success: function(serverResponse) {
+          console.log(serverResponse);
+          if (serverResponse) {
+            alert('Route deleted successfully');
+            window.location.href = '/graph';
+          }
+        },
+        error: function(errorResponse) {
+          if (errorResponse) {
+            alert(`Error deleting route: ${errorResponse.responseText}`);
+          }
+        }
+      });
+      console.log("Delete edge:", edgeId);
+    }
+
+    function updateEdge(edgeId) {
+      window.open('/manage/routes/' + edgeId, '_blank');
+      console.log("Update edge:", edgeId);
+    }
+  </script>
+</body>
+</html>
