@@ -1,4 +1,4 @@
-const { isEmpty, update, get, create } = require("lodash");
+const { isEmpty, update, get, create, map } = require("lodash");
 const { v4 } = require("uuid");
 const db = require("../../connectors/db");
 const roles = require("../../constants/roles");
@@ -537,9 +537,13 @@ app.post("/api/v1/prices", async function (req, res) {
   }
   destination = check2.id;
 
-  let short = await findShortestPath(origin,destination);
-  console.log(short);
- // shortest path
+  // let short = await findShortestPath(origin,destination);
+  const list= await makelist();
+   console.log("list  is",list);
+  const bfsres=await bfs(origin,destination);
+
+  return res.status(200).json({ message: bfsres, bfsres });
+
 
 });
 
@@ -662,76 +666,79 @@ app.post("/api/v1/refund/:ticketId", async function (req, res) {
 });
 
 };
-async function findShortestPath(origin, destination) {
-  try {
-    const routes = await db('se_project.routes').select('*');
-    const stations = await db('se_project.stations').select('*');
-    const stationRoutes = await db('se_project.stationroutes').select('*');
-    const graph = {};
-    stations.forEach((station) => {
-      graph[station.id] = {};
-    });
-    routes.forEach((route) => {
-      const fromStation = stationRoutes.find(
-        (stationRoute) =>
-          stationRoute.routeid === route.id && stationRoute.stationid === route.fromstationid
-      );
-      if (fromStation) {
-        const toStation = stationRoutes.find(
-          (stationRoute) =>
-            stationRoute.routeid === route.id && stationRoute.stationid === route.tostationid
-        );
-        if (toStation) {
-          graph[fromStation.stationid][toStation.stationid] = route;
-          console.log(graph);
+let AdgList = new Map();
+
+
+async function makelist() { 
+  const stations = await db('se_project.stations').select('*');
+  connectedStations = [];
+
+  stations.forEach((station) => {
+    addNode(station.id);
+  });
+  for (const station of stations) {
+    await addEdges(station.stationname, station.id);
+  }
+  
+  return AdgList ;
+};
+
+function addNode(id) {
+  AdgList.set(id, []);
+}
+
+async function addEdges(stationName, stationid) {
+  var stations = await db('se_project.routes')
+    .where('fromstationid', stationid)
+    .orWhere('tostationid', stationid);
+
+  stations.forEach((station) => {
+    if (station.fromstationid == stationid) {
+      if (!AdgList.has(stationid)) {
+        AdgList.set(stationid, []);
+      }
+      AdgList.get(stationid).push(station.tostationid);
+    } else {
+      if (!AdgList.has(stationid)) {
+        AdgList.set(stationid, []);
+      }
+      AdgList.get(stationid).push(station.fromstationid);
+      // console.log(AdgList);
+    }
+  });
+}
+
+async function bfs(origin, des) {
+  console.log("origin is ", origin, "destination is ", des);
+  let queue = [{ station: origin, price: 0 }];
+  let visited = new Set();
+
+  while (queue.length > 0) {
+    const { station, price } = queue.shift();
+    const destinations = AdgList.get(station);
+
+    if (destinations) {
+      for (const destination of destinations) {
+        const newPrice = price + 5; // Add 5 to the price for moving to the next node
+
+        if (destination === des) {
+          console.log("found it");
+          console.log("visited stations are", visited);
+          console.log("price is", newPrice);
+          return newPrice;
+        }
+
+        if (!visited.has(destination)) {
+          visited.add(destination);
+          queue.push({ station: destination, price: newPrice });
         }
       }
-    });
-    const stationIds = Object.keys(graph);
-    const distance = {};
-    const next = {};
-    stationIds.forEach((source) => {
-      distance[source] = {};
-      next[source] = {};
-      stationIds.forEach((destination) => {
-        if (source === destination) {
-          distance[source][destination] = 0;
-        } else {
-          distance[source][destination] = Infinity;
-        }
-        next[source][destination] = null;
-      });
-      Object.keys(graph[source]).forEach((neighbor) => {
-        const route = graph[source][neighbor];
-        distance[source][neighbor] = route ? 5 : Infinity; 
-        next[source][neighbor] = neighbor;
-      });
-    });
-    stationIds.forEach((k) => {
-      stationIds.forEach((i) => {
-        stationIds.forEach((j) => {
-          if (distance[i][j] > distance[i][k] + distance[k][j]) {
-            distance[i][j] = distance[i][k] + distance[k][j];
-            next[i][j] = next[i][k];
-          }
-        });
-      });
-    });
-    if (next[origin][destination] === null || distance[origin][destination] >= Number.MAX_SAFE_INTEGER) {
-      console.log("No path found between origin and destination");
-      return null;
     }
-    const shortestPath = [origin];
-    while (origin !== destination) {
-      origin = next[origin][destination];
-      shortestPath.push(origin);
-    }
-    const totalPrice = (shortestPath.length - 1) * 5; 
-    return { path: shortestPath, price: totalPrice };
-  } catch (error) {
-    console.error('Error occurred:', error);
-    throw error;
   }
+
+  console.log("visited stations are", visited);
+  console.log("Price not available. Destination station not found.");
+  return 0; // Destination not found
 }
 
 
@@ -1049,26 +1056,20 @@ async function getPreviousAndNextStations(StationId) {
   .where('fromstationid', StationId)
   .orWhere('tostationid', StationId)
 
-  console.log('routes are ',routes);
-  console.log('StationId is ',StationId);
+
   const previousStationIds = [];
   const nextStationIds = [];
   routes.forEach(route => {
-    console.log('route is ',route);
-    console.log(route['fromstationid'] , ' ?????=',StationId);
-    console.log(route['tostationid'] , ' ?????=',StationId);
+
     if (route['fromstationid'] == StationId) {
-      console.log('found next station ');
       nextStationIds.push(route.tostationid);
     }
     if (route['tostationid'] == StationId) {
-      console.log('found prev station ');
       previousStationIds.push(route.fromstationid);
     }
   });
   if (previousStationIds.length == 0 && nextStationIds.length == 0) {
-    console.log('Could not find previous or next station');
-    return false;
+    return { previousStationIds, nextStationIds };
   }
   return { previousStationIds, nextStationIds };
 }
